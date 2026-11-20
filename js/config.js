@@ -96,3 +96,27 @@ export const PRESETS = {
   "Big board (400 x 400, short window)": () => ({ rows: 400, cols: 400, window: 50 }),
   "Small board (60 x 60)": () => ({ rows: 60, cols: 60 }),
 };
+
+// --- Color editor ----------------------------------------------------------------
+
+/** Quick-pick swatches, shown 8 per row when changing or adding a color. */
+export const SWATCHES = [
+  "#e62828", "#f57c00", "#f5d000", "#8bc34a", "#2e9e44", "#00a5a5", "#2855e6", "#7b3fd0",
+  "#ff6f91", "#ffb74d", "#fff176", "#c5e1a5", "#80cbc4", "#81d4fa", "#9fa8da", "#ce93d8",
+  "#8b0000", "#8d5524", "#808000", "#1b5e20", "#004d40", "#0d1b6e", "#4a148c", "#880e4f",
+  "#ffffff", "#d0d0d0", "#a0a0a0", "#707070", "#404040", "#000000", "#ff00ff", "#00ffff",
+];
+
+/** Whole color sets; a function takes the current number of colors (keeps the count). */
+export const COLOR_SETS = {
+  "Red / blue / yellow": ["red", "blue", "yellow"],
+  "Rainbow (6)": ["yellow", "green", "blue", "purple", "red", "orange"],
+  "Traffic lights (3)": ["#e62828", "#f5d000", "#2e9e44"],
+  "CMY (3)": ["cyan", "magenta", "yellow"],
+  "Fire (5)": ["#2b0000", "#8b0000", "#e62828", "#f57c00", "#f5d000"],
+  "Ocean (5)": ["#0d1b6e", "#2855e6", "#00a5a5", "#80cbc4", "#e0f7fa"],
+  "Forest (5)": ["#1b5e20", "#2e9e44", "#8bc34a", "#8d5524", "#f5d000"],
+  "Color wheel (keep count)": (n) => hueColors(n),
+  "Pastel wheel (keep count)": (n) => Array.from({ length: n }, (_, i) => hsvToHex(i / n, 0.35, 1)),
+  "Grayscale (keep count)": (n) => Array.from({ length: n }, (_, i) => hsvToHex(0, 0, 0.1 + 0.85 * i / (n - 1))),
+};

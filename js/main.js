@@ -7,6 +7,7 @@ import { drawHistogram } from "./ui/histogram.js";
 import { PATTERNS } from "./core/patterns.js";
 import { randomSeed } from "./core/rng.js";
 import { createSettings } from "./ui/settings.js";
+import { createColorEditor } from "./ui/colors.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -272,21 +273,7 @@ function setView(panels, speed) {
   }
 }
 
-// Simple swatch list until the full color editor lands.
-const colorEditor = {
-  element: document.createElement("div"),
-  colors: [],
-  getColors() { return [...this.colors]; },
-  setColors(colors) {
-    this.colors = [...colors];
-    this.element.textContent = "";
-    for (const c of colors) {
-      const sw = document.createElement("span");
-      sw.style.cssText = `display:inline-block;width:28px;height:22px;margin:2px;border:1px solid #777;background:${c}`;
-      this.element.append(sw);
-    }
-  },
-};
+const colorEditor = createColorEditor();
 
 const settings = createSettings($("settings-form"), {
   getConfig: () => state.config,
