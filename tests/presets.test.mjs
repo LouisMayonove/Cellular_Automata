@@ -6,7 +6,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   PRESETS, SIZE_PRESETS, RULE_PRESETS, MEMORY_PRESETS, MAX_WINDOW_BYTES, defaultConfig,
-  defaultHalfLife, stepsFor99,
+  defaultHalfLife,
 } from "../js/config.js";
 
 const FIELDS = Object.keys(defaultConfig()).sort();
@@ -55,11 +55,11 @@ test("the largest board with the longest memory fits the window limit", () => {
   assert.ok(cells * window <= MAX_WINDOW_BYTES);
 });
 
-test("default half-life: 99 % of the fading average spans about 3/4 of the window", () => {
-  for (const window of [50, 100, 200, 500, 1000]) {
-    const share = stepsFor99(defaultHalfLife(window)) / window;
-    assert.ok(share > 0.65 && share < 0.85, `window ${window}: ${share}`);
-  }
+test("default half-life: 3/4 of the window", () => {
+  assert.equal(defaultHalfLife(100), 75);
+  assert.equal(defaultHalfLife(200), 150);
+  assert.equal(defaultHalfLife(1), 1);
+  assert.equal(defaultHalfLife(100000), 10000); // the half-life field's maximum
   assert.equal(defaultConfig().halfLife, defaultHalfLife(defaultConfig().window));
   for (const { window, halfLife } of Object.values(MEMORY_PRESETS)) {
     assert.equal(halfLife, defaultHalfLife(window));

@@ -44,10 +44,10 @@ export function stepsFor99(halfLife) {
   return Math.ceil(halfLife * Math.log2(100));
 }
 
-/** Default half-life for a statistics window: the fading average's 99 %
- *  memory (stepsFor99) spans about 3/4 of the window. */
+/** Default half-life for a statistics window: 3/4 of the window (75 for
+ *  100), within the half-life field's range (1..10000). */
 export function defaultHalfLife(window) {
-  return Math.max(1, Math.round(0.75 * window / Math.log2(100)));
+  return Math.min(10000, Math.max(1, Math.round(0.75 * window)));
 }
 
 /** Plain-words meaning of a half-life, for the settings hint. */
