@@ -2,14 +2,15 @@
 // canvases and wires the controls. Everything heavy happens in the worker;
 // this thread only sends commands and shows the per-frame reports.
 
-import { SPEEDS, defaultConfig, cssToRgb } from "./config.js";
+import { SPEEDS, PANELS, defaultConfig, cssToRgb } from "./config.js";
+import { drawHistogram } from "./ui/histogram.js";
 
 const $ = (id) => document.getElementById(id);
 
 const state = {
   config: defaultConfig(),
   pattern: { name: "Random", param: 0, seed: 0 },
-  panels: ["board", "average", "activity"],
+  panels: [], // visible panels, from the checkboxes
   running: false,
   frame: null, // last report from the worker
 };
@@ -66,6 +67,7 @@ function onFrame(f) {
     panelEls[name].querySelector(".sub").textContent = text;
   }
   if (f.pixels) drawPixels(f);
+  if (f.counts) redrawHistogram();
   if (resized) updatePixelation();
   updateStatus();
 }
@@ -141,9 +143,56 @@ $("speed").addEventListener("input", () => {
   send({ type: "speed", index: Number($("speed").value) });
 });
 
+// --- Panels -----------------------------------------------------------------------
+
+const panelChecks = Object.fromEntries(
+  [...document.querySelectorAll("input[data-panel]")].map((cb) => [cb.dataset.panel, cb]));
+
+/** [columns, rows] of the most compact layout: up to 3 panels in a line,
+ *  then a near-square grid (4 -> 2x2, ...), as in the desktop app. */
+function gridShape(n) {
+  if (n <= 3) return [Math.max(n, 1), 1];
+  const cols = Math.ceil(Math.sqrt(n));
+  return [cols, Math.ceil(n / cols)];
+}
+
+function visiblePanels() {
+  return PANELS.filter((name) => panelChecks[name].checked);
+}
+
+function layoutPanels() {
+  state.panels = visiblePanels();
+  const [cols, rows] = gridShape(state.panels.length);
+  // Keep panel order: hidden ones drop out of the grid.
+  for (const name of PANELS) panelEls[name].hidden = !state.panels.includes(name);
+  const grid = $("panels");
+  grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+  grid.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+  updatePixelation();
+  redrawHistogram();
+}
+
+function panelsChanged(e) {
+  if (visiblePanels().length === 0) { // keep at least one panel
+    e.target.checked = true;
+    return;
+  }
+  layoutPanels();
+  send({ type: "panels", panels: state.panels });
+}
+
+for (const cb of Object.values(panelChecks)) cb.addEventListener("change", panelsChanged);
+
+function redrawHistogram() {
+  const f = state.frame;
+  if (!state.panels.includes("histogram")) return;
+  drawHistogram(panelEls.histogram.querySelector("canvas"), f && f.counts, state.config.colors);
+}
+
+new ResizeObserver(redrawHistogram).observe(panelEls.histogram);
+
 // --- Start ------------------------------------------------------------------------
 
-for (const [name, el] of Object.entries(panelEls)) el.hidden = !state.panels.includes(name);
-$("panels").style.gridTemplateColumns = `repeat(${state.panels.length}, 1fr)`;
+layoutPanels();
 speedChanged();
 startWorker();
