@@ -8,7 +8,7 @@
 
 import { CyclicAutomaton } from "./core/automaton.js";
 import { makeBoard } from "./core/patterns.js";
-import { WindowStats, CycleRecorder, colorCounts, histogram, quantile } from "./core/stats.js";
+import { WindowStats, CycleRecorder, colorCounts, histogram, quantile, stdDev } from "./core/stats.js";
 import { palette32, heatLut32, renderPalette, renderMean, activityLevels, renderActivity } from "./core/render.js";
 import { SPEEDS, WINDOW_PANELS } from "./config.js";
 
@@ -240,13 +240,14 @@ function render() {
   if (visible.has("activity")) {
     const img = imageFor("activity");
     const changes = result !== null ? result.changes : sim.stats.changes;
-    // S-curve centred on the median cell, as wide as the spread of the
-    // middle half of the cells: most contrast where most cells are, no
+    // S-curve centred on the median cell, with the same spread as the
+    // activity: a logistic of scale s has standard deviation s * pi / sqrt(3),
+    // so s = sigma * sqrt(3) / pi. Most contrast where most cells are, no
     // threshold. 0 (never changed) is black, the most active cell brightest.
     const hist = histogram(changes);
     const max = hist.length - 1;
     const median = quantile(hist, 0.5);
-    const width = Math.max(1, (quantile(hist, 0.75) - quantile(hist, 0.25)) / 2);
+    const width = Math.max(0.25, stdDev(hist) * Math.sqrt(3) / Math.PI);
     renderActivity(changes, activityLevels(max, median, width), heat32, img.u32);
     const what = result !== null ? "one cycle" : `last ${sim.stats.size} steps`;
     subs.activity = `color changes over ${what}: black = 0, median = ${median}, brightest = ${max}`;

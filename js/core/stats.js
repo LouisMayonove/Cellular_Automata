@@ -137,6 +137,19 @@ export function histogram(values) {
   return hist;
 }
 
+/** Standard deviation of the values counted in a histogram. */
+export function stdDev(hist) {
+  let n = 0, sum = 0, sumSq = 0;
+  for (let v = 0; v < hist.length; v++) {
+    n += hist[v];
+    sum += hist[v] * v;
+    sumSq += hist[v] * v * v;
+  }
+  if (n === 0) return 0;
+  const mean = sum / n;
+  return Math.sqrt(Math.max(0, sumSq / n - mean * mean));
+}
+
 /** The value at fraction q (0..1) of the cells, from a histogram. */
 export function quantile(hist, q) {
   let total = 0;

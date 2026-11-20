@@ -3,7 +3,7 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { WindowStats, CycleRecorder, colorCounts, histogram, quantile } from "../js/core/stats.js";
+import { WindowStats, CycleRecorder, colorCounts, histogram, quantile, stdDev } from "../js/core/stats.js";
 import { activityLevels } from "../js/core/render.js";
 import { Rng } from "../js/core/rng.js";
 
@@ -76,6 +76,15 @@ test("histogram and quantiles", () => {
   assert.equal(quantile(hist, 0.25), 1);
   assert.equal(quantile(hist, 1), 7);
   assert.deepEqual([...histogram(new Int32Array(4))], [4]);
+});
+
+test("standard deviation from a histogram matches the direct formula", () => {
+  const rng = new Rng(5);
+  const values = Int32Array.from({ length: 1000 }, () => rng.int(0, 30));
+  const mean = values.reduce((s, v) => s + v, 0) / values.length;
+  const direct = Math.sqrt(values.reduce((s, v) => s + (v - mean) ** 2, 0) / values.length);
+  assert.ok(Math.abs(stdDev(histogram(values)) - direct) < 1e-9);
+  assert.equal(stdDev(histogram(new Int32Array(10).fill(4))), 0);
 });
 
 test("activity levels: 0 is black, max brightest, every count its own shade", () => {

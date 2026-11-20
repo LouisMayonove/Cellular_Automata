@@ -47,7 +47,7 @@ export function renderMean(sumR, sumG, sumB, n, out) {
 }
 
 /** Heat-map position (0..255) of each count 0..max on an S-curve (logistic)
- *  centred on `center`, `width` counts wide, rescaled so 0 is black and max
+ *  centred on `center` with scale `width`, rescaled so 0 is black and max
  *  is brightest. Contrast is highest around the centre, where most cells
  *  are, and both ends are compressed smoothly rather than clipped: every
  *  count keeps its own, increasing shade. */
