@@ -127,20 +127,25 @@ export function colorCounts(grid, n) {
   return Array.from(counts.subarray(0, n));
 }
 
-/** Median and max of small non-negative integer counts, via a histogram
- *  (much faster than sorting a large board). */
-export function medianAndMax(values) {
-  let top = 0;
-  for (let i = 0; i < values.length; i++) if (values[i] > top) top = values[i];
-  const hist = new Int32Array(top + 1);
+/** Histogram of a non-negative integer array: hist[v] = number of cells
+ *  equal to v, for v = 0..max (the largest value). */
+export function histogram(values) {
+  let max = 0;
+  for (let i = 0; i < values.length; i++) if (values[i] > max) max = values[i];
+  const hist = new Int32Array(max + 1);
   for (let i = 0; i < values.length; i++) hist[values[i]]++;
-  // First value whose cumulative count reaches (size + 1) // 2, as
-  // np.searchsorted(np.cumsum(hist), (size + 1) // 2) does.
-  const target = Math.floor((values.length + 1) / 2);
-  let acc = 0, median = 0;
-  for (; median <= top; median++) {
-    acc += hist[median];
-    if (acc >= target) break;
+  return hist;
+}
+
+/** The value at fraction q (0..1) of the cells, from a histogram. */
+export function quantile(hist, q) {
+  let total = 0;
+  for (let v = 0; v < hist.length; v++) total += hist[v];
+  const target = q * total;
+  let acc = 0;
+  for (let v = 0; v < hist.length; v++) {
+    acc += hist[v];
+    if (acc >= target) return v;
   }
-  return [median, top];
+  return hist.length - 1;
 }

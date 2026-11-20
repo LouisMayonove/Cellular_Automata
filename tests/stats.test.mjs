@@ -3,7 +3,8 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { WindowStats, CycleRecorder, colorCounts, medianAndMax } from "../js/core/stats.js";
+import { WindowStats, CycleRecorder, colorCounts, histogram, quantile } from "../js/core/stats.js";
+import { activityLevels } from "../js/core/render.js";
 import { Rng } from "../js/core/rng.js";
 
 const PALETTE = [[255, 0, 0], [0, 0, 255], [255, 255, 0], [10, 200, 30]];
@@ -68,14 +69,28 @@ test("color counts", () => {
   assert.deepEqual(colorCounts(Uint8Array.from([0, 2, 2, 1, 2, 0]), 4), [2, 1, 3, 0]);
 });
 
-test("median and max match sorting", () => {
-  const rng = new Rng(9);
-  for (const len of [1, 2, 3, 10, 101, 1000]) {
-    const values = Int32Array.from({ length: len }, () => rng.int(0, 20));
-    const sorted = [...values].sort((a, b) => a - b);
-    const [median, top] = medianAndMax(values);
-    assert.equal(top, sorted.at(-1));
-    // numpy's searchsorted on the cumulative histogram = the lower median
-    assert.equal(median, sorted[Math.floor((len + 1) / 2) - 1], `len ${len}`);
+test("histogram and quantiles", () => {
+  const hist = histogram(Int32Array.from([3, 0, 3, 1, 3, 7]));
+  assert.deepEqual([...hist], [1, 1, 0, 3, 0, 0, 0, 1]);
+  assert.equal(quantile(hist, 0.5), 3);
+  assert.equal(quantile(hist, 0.25), 1);
+  assert.equal(quantile(hist, 1), 7);
+  assert.deepEqual([...histogram(new Int32Array(4))], [4]);
+});
+
+test("activity levels: 0 is black, max brightest, every count its own shade", () => {
+  for (const [max, center, width] of [[0, 0, 1], [1, 0, 1], [5, 2, 1], [19, 12, 2], [100, 40, 10], [100, 3, 1]]) {
+    const levels = activityLevels(max, center, width);
+    assert.equal(levels.length, max + 1);
+    assert.equal(levels[0], 0);
+    if (max > 0) assert.equal(levels[max], 255);
+    for (let v = 1; v <= max; v++) {
+      assert.ok(levels[v] >= levels[v - 1], `max ${max}: not increasing at ${v}`);
+    }
   }
+  // Around the median the curve is steep: neighbouring counts differ clearly.
+  const typical = activityLevels(19, 12, 2);
+  assert.ok(typical[13] - typical[12] > 25);
+  // Neither end is clipped: quiet cells (1 vs 2 changes) still differ.
+  assert.ok(typical[2] > typical[1]);
 });

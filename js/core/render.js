@@ -46,12 +46,21 @@ export function renderMean(sumR, sumG, sumB, n, out) {
   }
 }
 
-/** Map values from lo..hi onto the heat LUT (<= lo darkest). */
-export function renderHeat(values, lo, hi, lut32, out) {
-  const scale = 255 / Math.max(hi - lo, 1);
-  for (let i = 0; i < out.length; i++) {
-    let idx = ((values[i] - lo) * scale) | 0;
-    idx = idx < 0 ? 0 : idx > 255 ? 255 : idx;
-    out[i] = lut32[idx];
-  }
+/** Heat-map position (0..255) of each count 0..max on an S-curve (logistic)
+ *  centred on `center`, `width` counts wide, rescaled so 0 is black and max
+ *  is brightest. Contrast is highest around the centre, where most cells
+ *  are, and both ends are compressed smoothly rather than clipped: every
+ *  count keeps its own, increasing shade. */
+export function activityLevels(max, center, width) {
+  const s = (v) => 1 / (1 + Math.exp(-(v - center) / width));
+  const lo = s(0), span = s(Math.max(max, 1)) - lo;
+  const levels = new Uint8Array(max + 1);
+  for (let v = 1; v <= max; v++) levels[v] = Math.round(255 * (s(v) - lo) / span);
+  return levels;
+}
+
+/** Color each cell by its count on the heat map, given the S-curve levels. */
+export function renderActivity(values, levels, lut32, out) {
+  const pixels = Uint32Array.from(levels, (l) => lut32[l]); // count -> pixel
+  for (let i = 0; i < out.length; i++) out[i] = pixels[values[i]];
 }
