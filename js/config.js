@@ -60,3 +60,39 @@ export function cssToRgb(color) {
 export function cssToHex(color) {
   return "#" + cssToRgb(color).map((x) => x.toString(16).padStart(2, "0")).join("");
 }
+
+// --- Presets -------------------------------------------------------------------
+// Each sets only the fields it lists; the others (often the grid size,
+// statistics window and cycle handling) keep their current values. Besides
+// settings fields, a preset may set `panels` (shown panels) and `speed`
+// (steps/s, a value of SPEEDS) on the simulation tab.
+
+export const PRESETS = {
+  "Rainbow (6 colors, threshold 2, surround 4, no wrap)": () => ({
+    colors: ["yellow", "green", "blue", "purple", "red", "orange"], connectivity: 8,
+    threshold: 2, surround: 4, wrap: false, window: 200, panels: [...PANELS], speed: 40,
+  }),
+  "Default (3 colors, Moore, threshold 3)": () => ({
+    colors: [...DEFAULT_COLORS], connectivity: 8, threshold: 3, surround: 7, wrap: true,
+  }),
+  "Spirals 3-3-3 (no surround rule)": () => ({
+    colors: [...DEFAULT_COLORS], connectivity: 8, threshold: 3, surround: 0, wrap: true,
+  }),
+  "Fast fronts (3 colors, threshold 1)": () => ({
+    colors: [...DEFAULT_COLORS], connectivity: 8, threshold: 1, surround: 0, wrap: true,
+  }),
+  "Classic CCA (14 colors, von Neumann, threshold 1)": () => ({
+    colors: hueColors(14), connectivity: 4, threshold: 1, surround: 0, wrap: true,
+  }),
+  "Color-wheel spirals (8 colors, Moore, threshold 2)": () => ({
+    colors: hueColors(8), connectivity: 8, threshold: 2, surround: 0, wrap: true,
+  }),
+  "Smooth blobs (4 colors, strong surround rule)": () => ({
+    colors: ["red", "blue", "yellow", "green"], connectivity: 8, threshold: 3, surround: 5, wrap: true,
+  }),
+  "Walled box (3 colors, edges don't wrap)": () => ({
+    colors: [...DEFAULT_COLORS], connectivity: 8, threshold: 3, surround: 7, wrap: false,
+  }),
+  "Big board (400 x 400, short window)": () => ({ rows: 400, cols: 400, window: 50 }),
+  "Small board (60 x 60)": () => ({ rows: 60, cols: 60 }),
+};

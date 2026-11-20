@@ -6,6 +6,7 @@ import { SPEEDS, PANELS, defaultConfig, cssToRgb } from "./config.js";
 import { drawHistogram } from "./ui/histogram.js";
 import { PATTERNS } from "./core/patterns.js";
 import { randomSeed } from "./core/rng.js";
+import { createSettings } from "./ui/settings.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -231,6 +232,68 @@ function redrawHistogram() {
 }
 
 new ResizeObserver(redrawHistogram).observe(panelEls.histogram);
+
+// --- Tabs -------------------------------------------------------------------------
+
+function showTab(name) {
+  for (const [tab, page] of [["tab-sim", "page-sim"], ["tab-settings", "page-settings"]]) {
+    const on = tab === name;
+    $(tab).setAttribute("aria-selected", String(on));
+    $(page).hidden = !on;
+  }
+  if (name === "tab-sim") { layoutPanels(); } else { settings.load(); }
+}
+
+$("tab-sim").addEventListener("click", () => showTab("tab-sim"));
+$("tab-settings").addEventListener("click", () => showTab("tab-settings"));
+$("btn-settings").addEventListener("click", () => showTab("tab-settings"));
+
+// --- Settings -------------------------------------------------------------------------
+
+/** Switch to new settings; the worker restarts the board if the size or the
+ *  number of colors changed, otherwise the run continues. */
+function applyConfig(config) {
+  state.config = config;
+  send({ type: "config", config, palette: palette(config) });
+  redrawHistogram();
+}
+
+/** A preset's view changes: shown panels and/or speed (undefined: keep). */
+function setView(panels, speed) {
+  if (speed !== undefined) {
+    $("speed").value = SPEEDS.indexOf(speed);
+    speedChanged();
+    send({ type: "speed", index: Number($("speed").value) });
+  }
+  if (panels !== undefined) {
+    for (const [name, cb] of Object.entries(panelChecks)) cb.checked = panels.includes(name);
+    layoutPanels();
+    send({ type: "panels", panels: state.panels });
+  }
+}
+
+// Simple swatch list until the full color editor lands.
+const colorEditor = {
+  element: document.createElement("div"),
+  colors: [],
+  getColors() { return [...this.colors]; },
+  setColors(colors) {
+    this.colors = [...colors];
+    this.element.textContent = "";
+    for (const c of colors) {
+      const sw = document.createElement("span");
+      sw.style.cssText = `display:inline-block;width:28px;height:22px;margin:2px;border:1px solid #777;background:${c}`;
+      this.element.append(sw);
+    }
+  },
+};
+
+const settings = createSettings($("settings-form"), {
+  getConfig: () => state.config,
+  apply: applyConfig,
+  setView,
+  colorEditor,
+});
 
 // --- Start ------------------------------------------------------------------------
 

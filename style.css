@@ -229,6 +229,7 @@ legend { font-weight: 600; padding: 0 4px; }
 .settings .note { grid-column: 1 / -1; color: var(--muted); }
 .settings .actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
 .settings .inline { display: flex; align-items: center; gap: 8px; }
+.settings .inline input[type="number"] { width: 110px; flex: none; }
 .settings .hint { color: var(--muted); font-size: 12.5px; }
 .settings .error { grid-column: 1 / -1; color: #d33; }
 
