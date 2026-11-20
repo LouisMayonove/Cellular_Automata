@@ -80,5 +80,22 @@
   <footer id="status" class="status" aria-live="polite">Loading…</footer>
 
   <script type="module" src="js/main.js"></script>
+  <script>
+    // If the app can't start, say why instead of showing "Loading…" forever.
+    (function () {
+      var status = document.getElementById("status");
+      if (location.protocol === "file:") {
+        status.textContent = "This page can't run from a file: browsers block its scripts. "
+          + "Serve the folder (e.g. python -m http.server) and open http://localhost:8000.";
+        return;
+      }
+      setTimeout(function () {
+        if (status.textContent === "Loading…") {
+          status.textContent = "The app didn't start. Try a hard refresh (Ctrl+F5); "
+            + "if it persists, the browser console (F12) shows the error.";
+        }
+      }, 5000);
+    })();
+  </script>
 </body>
 </html>
