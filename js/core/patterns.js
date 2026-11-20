@@ -46,7 +46,10 @@ export function initSectors(rows, cols, n, rng, turns = 0) {
     for (let x = 0; x < cols; x++) {
       const angle = mod1(Math.atan2(y - cy, x - cx) / (2 * Math.PI)); // 0..1
       const radius = Math.hypot(y - cy, x - cx) / size;
-      const phase = mod1(angle + turns * radius);
+      // Colors increase clockwise on screen and a cell only moves on to the
+      // next color, so the pattern turns counterclockwise. Arms that suit
+      // that rotation (waves moving outwards) wind the other way: minus.
+      const phase = mod1(angle - turns * radius);
       out[y * cols + x] = Math.floor(phase * n) % n;
     }
   }

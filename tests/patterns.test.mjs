@@ -58,3 +58,19 @@ test("random colors are about equally frequent; weights are respected", () => {
   const share1 = w.reduce((s, v) => s + v, 0) / w.length;
   assert.ok(Math.abs(share1 - 0.25) < 0.01, `share ${share1}`);
 });
+
+test("twisted sectors are wound the way the spiral turns (it keeps its shape)", async () => {
+  const { CyclicAutomaton } = await import("../js/core/automaton.js");
+  const N = 81, n = 3, turns = 6;
+  const seed = initSectors(N, N, n, null, turns);
+  const ca = new CyclicAutomaton(N, N, n, { connectivity: 8, threshold: 3, surround: 0, wrap: true, grid: seed });
+  for (let i = 0; i < 30; i++) ca.step();
+  // Best match with the seed's colors shifted by a constant (a pure rotation).
+  let best = 0;
+  for (let k = 0; k < n; k++) {
+    let m = 0;
+    for (let i = 0; i < seed.length; i++) m += (seed[i] + k) % n === ca.grid[i];
+    best = Math.max(best, m / seed.length);
+  }
+  assert.ok(best > 0.6, `only ${(100 * best).toFixed(0)}% of the shape kept`);
+});
