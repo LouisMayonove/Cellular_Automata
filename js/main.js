@@ -247,7 +247,6 @@ function showTab(name) {
 
 $("tab-sim").addEventListener("click", () => showTab("tab-sim"));
 $("tab-settings").addEventListener("click", () => showTab("tab-settings"));
-$("btn-settings").addEventListener("click", () => showTab("tab-settings"));
 
 // --- Keyboard ---------------------------------------------------------------------
 // Space = run/pause, Right = one step, R = stop/reset. Only on the simulation
