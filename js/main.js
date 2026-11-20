@@ -249,6 +249,20 @@ $("tab-sim").addEventListener("click", () => showTab("tab-sim"));
 $("tab-settings").addEventListener("click", () => showTab("tab-settings"));
 $("btn-settings").addEventListener("click", () => showTab("tab-settings"));
 
+// --- Keyboard ---------------------------------------------------------------------
+// Space = run/pause, Right = one step, R = stop/reset. Only on the simulation
+// tab, and not while typing in a field, so they never clash with the forms.
+
+document.addEventListener("keydown", (e) => {
+  if ($("page-sim").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.target.closest("input, select, textarea")) return;
+  const actions = { " ": toggleRun, ArrowRight: stepOnce, r: stop, R: stop };
+  const action = actions[e.key];
+  if (!action) return;
+  e.preventDefault(); // also keeps Space from clicking a focused button
+  if (!e.repeat || e.key === "ArrowRight") action();
+});
+
 // --- Settings -------------------------------------------------------------------------
 
 /** Switch to new settings; the worker restarts the board if the size or the

@@ -301,7 +301,7 @@ legend { font-weight: 600; padding: 0 4px; }
   main { overflow: visible; }
   #page-sim { flex-direction: column; padding: 12px 16px; }
   .controls { flex: none; overflow: visible; }
-  .panels { grid-template-columns: 1fr !important; grid-template-rows: none !important; }
+  .panels { order: -1; grid-template-columns: 1fr !important; grid-template-rows: none !important; }
   .panel { aspect-ratio: 1 / 1.08; }
   .settings { grid-template-columns: 1fr; gap: 4px; }
   .settings > label, .settings > .label { padding-top: 10px; font-weight: 600; }
