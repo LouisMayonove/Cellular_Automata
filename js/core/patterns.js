@@ -56,7 +56,11 @@ export function initSectors(rows, cols, n, rng, turns = 0) {
   return out;
 }
 
-/** `count` sector patterns (spiral seeds) scattered over a calm background:
+/** Twist of the seeds below: the twist is per board width, so 2 winds each
+ *  arm one full turn between the centre and the edge of the seed. */
+const SEED_TWIST = 2;
+
+/** `count` twisted sector patterns (spiral seeds) scattered over a calm background:
  *  the first color with 35 % of cells set to other colors. (A fully random
  *  background forms spirals everywhere on its own and would drown the seeds;
  *  35 % is about the most noise that stays free of spirals of its own.) */
@@ -64,7 +68,7 @@ export function initSpiralSeeds(rows, cols, n, rng, count) {
   const out = initSprinkle(rows, cols, n, rng, 35);
   const r = Math.max(4, Math.floor(Math.min(rows, cols) / 25));
   const side = 2 * r + 1;
-  const seed = initSectors(side, side, n, rng);
+  const seed = initSectors(side, side, n, rng, SEED_TWIST);
   for (let s = 0; s < Math.max(0, Math.floor(count)); s++) {
     const y0 = rng.int(0, Math.max(1, rows - side));
     const x0 = rng.int(0, Math.max(1, cols - side));
