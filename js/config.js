@@ -33,6 +33,34 @@ export function defaultConfig() {
   };
 }
 
+// --- Fading average ------------------------------------------------------------
+
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+/** Number of most recent steps that make up 99 % of a fading average with
+ *  this half-life: weights halve every h steps, so the last K boards hold
+ *  1 - 2^(-K/h) of the total, which reaches 99 % at K = h * log2(100). */
+export function stepsFor99(halfLife) {
+  return Math.ceil(halfLife * Math.log2(100));
+}
+
+/** Plain-words meaning of a half-life, for the settings hint. */
+export function describeHalfLife(h) {
+  const first = h === 1
+    ? "Each step keeps half of the previous average and adds half of the current color: "
+      + "the previous board counts half as much as the current one, the one before a quarter, and so on."
+    : `A board from ${plural(h, "step")} ago counts half as much as the current one, `
+      + `from ${2 * h} steps ago a quarter, and so on.`;
+  return `${first} The last ${plural(stepsFor99(h), "step")} make up 99% of the image. `
+    + "Larger values remember longer and look smoother.";
+}
+
+/** Short version for the panel caption. */
+export function captionHalfLife(h) {
+  return `a color ${plural(h, "step")} old counts half as much as the current one; `
+    + `99% of the image comes from the last ${plural(stepsFor99(h), "step")}`;
+}
+
 // --- Colors ------------------------------------------------------------------
 
 /** HSV (all in 0..1) to "#rrggbb", as Qt's QColor.fromHsvF(...).name(). */

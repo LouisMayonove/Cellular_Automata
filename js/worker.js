@@ -14,7 +14,7 @@ import {
 import {
   palette32, heatLut32, renderPalette, renderMean, renderColor, activityLevels, renderActivity,
 } from "./core/render.js";
-import { SPEEDS, WINDOW_PANELS } from "./config.js";
+import { SPEEDS, WINDOW_PANELS, captionHalfLife } from "./config.js";
 
 const SLICE = 12;           // ms of simulation per tick when running flat out
 const MIN_FRAME = 1000 / 60; // never redraw more often than this
@@ -269,10 +269,7 @@ function render() {
   if (visible.has("fading")) {
     const f = sim.fading;
     renderColor(f.r, f.g, f.b, imageFor("fading").u32);
-    const h = sim.config.halfLife;
-    subs.fading = h === 1
-      ? "each step: half the previous average + half the current color (weights 1/2, 1/4, 1/8...)"
-      : `weights halve every ${h} steps (each step keeps ${(100 * (1 - f.alpha)).toFixed(1)}% of the average)`;
+    subs.fading = captionHalfLife(sim.config.halfLife);
   }
   let activity = null; // histogram + S-curve, for the activity histogram panel
   if (visible.has("activity") || visible.has("activityHist")) {

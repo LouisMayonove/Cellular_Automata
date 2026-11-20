@@ -2,7 +2,7 @@
 // colors, statistics window and cycle handling, with Apply / Revert.
 // Port of SettingsPanel from ca_app.py.
 
-import { PRESETS, MAX_WINDOW_BYTES } from "../config.js";
+import { PRESETS, MAX_WINDOW_BYTES, describeHalfLife } from "../config.js";
 
 /**
  * @param {HTMLFormElement} form
@@ -53,13 +53,13 @@ export function createSettings(form, { getConfig, apply, setView, colorEditor })
     <label for="set-window">Statistics window (steps)</label>
     <div class="inline">
       <input type="number" id="set-window" min="1" max="100000">
-      <span class="hint">past steps used by the average and activity panels</span>
+      <span class="hint">past steps used by the Average color and Activity panels</span>
     </div>
 
-    <label for="set-half-life">Fading average half-life (steps)</label>
+    <label for="set-half-life">Fading average memory (half-life, in steps)</label>
     <div class="inline">
       <input type="number" id="set-half-life" min="1" max="10000">
-      <span class="hint">1 = half the previous average + half the current color each step</span>
+      <span class="hint" id="set-half-life-hint"></span>
     </div>
 
     <span class="label">Cycles</span>
@@ -77,6 +77,11 @@ export function createSettings(form, { getConfig, apply, setView, colorEditor })
   const preset = el("preset");
   for (const name of Object.keys(PRESETS)) preset.add(new Option(name, name));
   el("colors").append(colorEditor.element);
+
+  function halfLifeHint() {
+    const h = Math.max(1, Math.round(Number(el("half-life").value)) || 1);
+    el("half-life-hint").textContent = describeHalfLife(h);
+  }
 
   function surroundHint() {
     const v = Number(el("surround").value);
@@ -112,6 +117,7 @@ export function createSettings(form, { getConfig, apply, setView, colorEditor })
     colorEditor.setColors(c.colors);
     el("window").value = c.window;
     el("half-life").value = c.halfLife;
+    halfLifeHint();
     el("stop-cycle").checked = c.stopOnCycle;
     el("error").hidden = true;
     surroundHint();
@@ -183,6 +189,7 @@ export function createSettings(form, { getConfig, apply, setView, colorEditor })
     lastConnectivity = Number(el("connectivity").value);
   });
   el("surround").addEventListener("input", surroundHint);
+  el("half-life").addEventListener("input", halfLifeHint);
   preset.addEventListener("change", presetChosen);
   el("revert").addEventListener("click", load);
   form.addEventListener("submit", (e) => { e.preventDefault(); submit(); });
