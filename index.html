@@ -49,6 +49,7 @@
           <label class="check"><input type="checkbox" data-panel="average" checked> Average color</label>
           <label class="check"><input type="checkbox" data-panel="activity" checked> Activity</label>
           <label class="check"><input type="checkbox" data-panel="histogram"> Color histogram</label>
+          <label class="check"><input type="checkbox" data-panel="activityHist"> Activity histogram</label>
         </fieldset>
       </aside>
 
@@ -67,6 +68,10 @@
         </figure>
         <figure class="panel" data-panel="histogram">
           <figcaption>Color histogram <span class="sub">share of the current board (axis 0-100%)</span></figcaption>
+          <div class="panel-body"><canvas class="chart"></canvas></div>
+        </figure>
+        <figure class="panel" data-panel="activityHist">
+          <figcaption>Activity histogram <span class="sub"></span></figcaption>
           <div class="panel-body"><canvas class="chart"></canvas></div>
         </figure>
       </div>

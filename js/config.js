@@ -3,12 +3,13 @@
 /** Speed slider positions (steps per second); null = as fast as possible. */
 export const SPEEDS = [1, 2, 3, 5, 10, 20, 30, 40, 50, 100, 200, 300, 500, 1000, 2000, 5000, null];
 
-export const PANELS = ["board", "average", "activity", "histogram"];
+export const PANELS = ["board", "average", "activity", "histogram", "activityHist"];
 export const PANEL_NAMES = {
   board: "Board", average: "Average color", activity: "Activity", histogram: "Color histogram",
+  activityHist: "Activity histogram",
 };
 /** Panels that need the sliding-window statistics. */
-export const WINDOW_PANELS = ["average", "activity"];
+export const WINDOW_PANELS = ["average", "activity", "activityHist"];
 
 /** Largest statistics window allowed, in bytes (rows x cols x window). A
  *  browser tab has less memory than a desktop app (which allowed 2 GB). */

@@ -237,8 +237,8 @@ function render() {
       subs.average = `last ${s.size}/${s.window} steps`;
     }
   }
-  if (visible.has("activity")) {
-    const img = imageFor("activity");
+  let activity = null; // histogram + S-curve, for the activity histogram panel
+  if (visible.has("activity") || visible.has("activityHist")) {
     const changes = result !== null ? result.changes : sim.stats.changes;
     // S-curve centred on the median cell, with the same spread as the
     // activity: a logistic of scale s has standard deviation s * pi / sqrt(3),
@@ -247,10 +247,19 @@ function render() {
     const hist = histogram(changes);
     const max = hist.length - 1;
     const median = quantile(hist, 0.5);
-    const width = Math.max(0.25, stdDev(hist) * Math.sqrt(3) / Math.PI);
-    renderActivity(changes, activityLevels(max, median, width), heat32, img.u32);
+    const sigma = stdDev(hist);
+    const width = Math.max(0.25, sigma * Math.sqrt(3) / Math.PI);
+    const levels = activityLevels(max, median, width);
     const what = result !== null ? "one cycle" : `last ${sim.stats.size} steps`;
-    subs.activity = `color changes over ${what}: black = 0, median = ${median}, brightest = ${max}`;
+    if (visible.has("activity")) {
+      renderActivity(changes, levels, heat32, imageFor("activity").u32);
+      subs.activity = `color changes over ${what}: black = 0, median = ${median}, brightest = ${max}`;
+    }
+    if (visible.has("activityHist")) {
+      activity = { hist, levels, median, sigma };
+      subs.activityHist = `cells per number of changes over ${what}; line = brightness `
+        + `(S-curve: median ${median}, σ ${sigma.toFixed(2)})`;
+    }
   }
   for (const name of IMAGE_PANELS) {
     if (!visible.has(name)) continue;
@@ -285,6 +294,7 @@ function render() {
     cycleText: sim.cycleText(),
     subs,
     counts: visible.has("histogram") ? colorCounts(ca.grid, c.colors.length) : null,
+    activity,
     pixels: contexts ? null : pixels,
   }, contexts ? [] : Object.values(pixels));
 }

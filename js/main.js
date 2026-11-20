@@ -4,6 +4,7 @@
 
 import { SPEEDS, PANELS, defaultConfig, cssToRgb } from "./config.js";
 import { drawHistogram } from "./ui/histogram.js";
+import { drawActivityHistogram } from "./ui/activity-histogram.js";
 import { PATTERNS } from "./core/patterns.js";
 import { randomSeed } from "./core/rng.js";
 import { createSettings } from "./ui/settings.js";
@@ -72,6 +73,7 @@ function onFrame(f) {
   }
   if (f.pixels) drawPixels(f);
   if (f.counts) redrawHistogram();
+  if (f.activity) redrawActivityHistogram();
   if (resized) updatePixelation();
   updateStatus();
 }
@@ -213,6 +215,7 @@ function layoutPanels() {
   grid.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
   updatePixelation();
   redrawHistogram();
+  redrawActivityHistogram();
 }
 
 function panelsChanged(e) {
@@ -233,6 +236,14 @@ function redrawHistogram() {
 }
 
 new ResizeObserver(redrawHistogram).observe(panelEls.histogram);
+
+function redrawActivityHistogram() {
+  const f = state.frame;
+  if (!state.panels.includes("activityHist")) return;
+  drawActivityHistogram(panelEls.activityHist.querySelector("canvas"), f && f.activity);
+}
+
+new ResizeObserver(redrawActivityHistogram).observe(panelEls.activityHist);
 
 // --- Tabs -------------------------------------------------------------------------
 
