@@ -159,11 +159,19 @@ export function createSettings(form, { getConfig, apply, colorEditor }) {
     };
   }
 
-  /** Show whether the form differs from the settings applied. */
+  /** Do the values in `a` all equal those in `b` (colors compared in order)? */
+  const matches = (a, b) => Object.keys(a).every((k) =>
+    k === "colors" ? a.colors.join() === b.colors.join() : a[k] === b[k]);
+
+  /** Show whether the form differs from the settings applied, and let each
+   *  preset menu show the preset the form currently matches (or its prompt). */
   function updatePending() {
-    const c = getConfig(), v = formValues();
-    el("pending").hidden = Object.keys(v).every((k) =>
-      k === "colors" ? v.colors.join() === c.colors.join() : v[k] === c[k]);
+    const v = formValues();
+    el("pending").hidden = matches(v, getConfig());
+    for (const menu of menus) {
+      const group = GROUPS[menu.dataset.group];
+      menu.value = Object.keys(group).find((name) => matches(group[name], v)) ?? "";
+    }
   }
 
   function number(input) {
@@ -207,7 +215,6 @@ export function createSettings(form, { getConfig, apply, colorEditor }) {
   /** Fill the fields a preset lists (the others keep their values). */
   function presetChosen(menu) {
     const v = GROUPS[menu.dataset.group][menu.value];
-    menu.value = "";
     if (!v) return;
     if ("rows" in v) { el("rows").value = v.rows; el("cols").value = v.cols; }
     if ("connectivity" in v) {

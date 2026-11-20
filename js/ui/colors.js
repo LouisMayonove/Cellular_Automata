@@ -41,7 +41,17 @@ export function createColorEditor() {
     render();
   }
 
+  /** Show the color set the colors currently match, if any. */
+  function syncSets() {
+    const key = colors.join();
+    sets.value = Object.keys(COLOR_SETS).find((name) => {
+      const v = COLOR_SETS[name];
+      return (typeof v === "function" ? v(colors.length) : v).join() === key;
+    }) ?? "";
+  }
+
   function render() {
+    syncSets();
     list.textContent = "";
     const n = colors.length;
     colors.forEach((c, i) => {
@@ -125,8 +135,8 @@ export function createColorEditor() {
   btn("reverse").addEventListener("click", () => setColors(colors.reverse()));
   sets.addEventListener("change", () => {
     const value = COLOR_SETS[sets.value];
-    sets.value = "";
     if (value) setColors(typeof value === "function" ? value(colors.length) : value);
+    else syncSets();
   });
   list.addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft" && e.altKey) { move(-1); e.preventDefault(); }
