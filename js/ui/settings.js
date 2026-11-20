@@ -5,6 +5,7 @@
 
 import {
   PRESETS, SIZE_PRESETS, RULE_PRESETS, MEMORY_PRESETS, MAX_WINDOW_BYTES, describeHalfLife,
+  defaultHalfLife,
 } from "../config.js";
 
 /** A section heading, with its preset menu if it has one. */
@@ -102,6 +103,18 @@ export function createSettings(form, { getConfig, apply, colorEditor }) {
     for (const name of Object.keys(GROUPS[menu.dataset.group])) menu.add(new Option(name, name));
   }
 
+  /** Window edited: a half-life still at its default for the previous
+   *  window follows the new one (a custom half-life is kept). */
+  let lastWindow = getConfig().window;
+  function windowChanged() {
+    const now = Math.round(Number(el("window").value)) || 0;
+    if (Math.round(Number(el("half-life").value)) === defaultHalfLife(lastWindow)) {
+      el("half-life").value = defaultHalfLife(now);
+      halfLifeHint();
+    }
+    lastWindow = now;
+  }
+
   function halfLifeHint() {
     const h = Math.max(1, Math.round(Number(el("half-life").value)) || 1);
     el("half-life-hint").textContent = describeHalfLife(h);
@@ -168,6 +181,7 @@ export function createSettings(form, { getConfig, apply, colorEditor }) {
   function updatePending() {
     const v = formValues();
     el("pending").hidden = matches(v, getConfig());
+    lastWindow = v.window; // also after presets, Revert and Apply
     for (const menu of menus) {
       const group = GROUPS[menu.dataset.group];
       menu.value = Object.keys(group).find((name) => matches(group[name], v)) ?? "";
@@ -240,6 +254,7 @@ export function createSettings(form, { getConfig, apply, colorEditor }) {
   });
   el("surround").addEventListener("input", surroundHint);
   el("half-life").addEventListener("input", halfLifeHint);
+  el("window").addEventListener("input", windowChanged);
   for (const menu of menus) menu.addEventListener("change", () => presetChosen(menu));
   // Any edit, including the color editor's buttons, drags and color picker.
   for (const type of ["input", "change", "click", "drop", "keyup"]) {

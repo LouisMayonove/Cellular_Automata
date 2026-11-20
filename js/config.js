@@ -28,7 +28,7 @@ export function defaultConfig() {
     surround: 7, // 0 = surround rule off
     wrap: true,
     window: 100,
-    halfLife: 1, // fading average: weights halve every `halfLife` steps (1: 1/2, 1/4, 1/8, ...)
+    halfLife: defaultHalfLife(100), // fading average: weights halve every `halfLife` steps
     stopOnCycle: true,
   };
 }
@@ -42,6 +42,12 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
  *  1 - 2^(-K/h) of the total, which reaches 99 % at K = h * log2(100). */
 export function stepsFor99(halfLife) {
   return Math.ceil(halfLife * Math.log2(100));
+}
+
+/** Default half-life for a statistics window: the fading average's 99 %
+ *  memory (stepsFor99) spans about 3/4 of the window. */
+export function defaultHalfLife(window) {
+  return Math.max(1, Math.round(0.75 * window / Math.log2(100)));
 }
 
 /** Plain-words meaning of a half-life, for the settings hint. */
@@ -118,12 +124,16 @@ export const RULE_PRESETS = {
   "Diamonds: von Neumann, beat 2, surround 3": { connectivity: 4, threshold: 2, surround: 3 },
 };
 
-export const MEMORY_PRESETS = {
-  "Short: window 20, half-life 1": { window: 20, halfLife: 1 },
-  "Default: window 100, half-life 1": { window: 100, halfLife: 1 },
-  "Smooth: window 200, half-life 10": { window: 200, halfLife: 10 },
-  "Long: window 500, half-life 30": { window: 500, halfLife: 30 },
-};
+/** Window and half-life together, the half-life at its default for the window. */
+const memory = (name, window) =>
+  [`${name}: window ${window}, half-life ${defaultHalfLife(window)}`, { window, halfLife: defaultHalfLife(window) }];
+
+export const MEMORY_PRESETS = Object.fromEntries([
+  memory("Short", 20),
+  memory("Default", 100),
+  memory("Long", 200),
+  memory("Very long", 500),
+]);
 
 /** A full preset from one preset of each group, plus edges and colors. */
 function full(size, rules, wrap, colors, memory) {
@@ -142,7 +152,7 @@ export const PRESETS = {
   "Default (3 colors, medium board)":
     full("Medium", "Default", true, DEFAULT_COLORS, "Default"),
   "Rainbow (6 colors, edges don't wrap)":
-    full("Medium", "Rainbow", false, ["yellow", "green", "blue", "purple", "red", "orange"], "Smooth"),
+    full("Medium", "Rainbow", false, ["yellow", "green", "blue", "purple", "red", "orange"], "Long"),
   "Spirals 3-3-3 (no surround rule)":
     full("Medium", "Spirals", true, DEFAULT_COLORS, "Default"),
   "Fast fronts (3 colors, threshold 1)":
@@ -150,9 +160,9 @@ export const PRESETS = {
   "Classic CCA (14 colors, von Neumann)":
     full("Large", "Classic CCA", true, hueColors(14), "Default"),
   "Color-wheel spirals (8 colors)":
-    full("Large", "Wheel spirals", true, hueColors(8), "Smooth"),
+    full("Large", "Wheel spirals", true, hueColors(8), "Long"),
   "Smooth blobs (4 colors, strong surround rule)":
-    full("Medium", "Smooth blobs", true, ["red", "blue", "yellow", "green"], "Smooth"),
+    full("Medium", "Smooth blobs", true, ["red", "blue", "yellow", "green"], "Long"),
   "Walled box (small board, edges don't wrap)":
     full("Small", "Default", false, DEFAULT_COLORS, "Default"),
   "Big spirals (600 × 600)":
