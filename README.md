@@ -28,3 +28,14 @@ then open <http://localhost:8000>.
 2. Repository **Settings → Pages → Build and deployment → Deploy from a branch**,
    branch `main`, folder `/ (root)`.
 3. After a minute the app is live at `https://<user>.github.io/<repo>/`.
+
+## Tests
+
+`tests/crosscheck.mjs` runs the original Python engine (`ca_core.py`) and this
+JavaScript engine on the same boards, for every rule combination, and checks
+that the boards and detected cycles are identical cell for cell. It needs
+[Node.js](https://nodejs.org) and [uv](https://docs.astral.sh/uv/):
+
+```sh
+node tests/crosscheck.mjs "<folder containing ca_core.py>"
+```
