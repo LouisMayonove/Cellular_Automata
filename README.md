@@ -39,3 +39,9 @@ that the boards and detected cycles are identical cell for cell. It needs
 ```sh
 node tests/crosscheck.mjs "<folder containing ca_core.py>"
 ```
+
+Unit tests (patterns, statistics) need only Node.js:
+
+```sh
+node --test "tests/*.test.mjs"
+```
