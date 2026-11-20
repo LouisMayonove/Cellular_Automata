@@ -3,9 +3,10 @@
 /** Speed slider positions (steps per second); null = as fast as possible. */
 export const SPEEDS = [1, 2, 3, 5, 10, 20, 30, 40, 50, 100, 200, 300, 500, 1000, 2000, 5000, null];
 
-export const PANELS = ["board", "average", "activity", "histogram", "activityHist"];
+export const PANELS = ["board", "average", "fading", "activity", "histogram", "activityHist"];
 export const PANEL_NAMES = {
-  board: "Board", average: "Average color", activity: "Activity", histogram: "Color histogram",
+  board: "Board", average: "Average color", fading: "Fading average", activity: "Activity",
+  histogram: "Color histogram",
   activityHist: "Activity histogram",
 };
 /** Panels that need the sliding-window statistics. */
@@ -27,6 +28,7 @@ export function defaultConfig() {
     surround: 7, // 0 = surround rule off
     wrap: true,
     window: 100,
+    halfLife: 1, // fading average: weights halve every `halfLife` steps (1: 1/2, 1/4, 1/8, ...)
     stopOnCycle: true,
   };
 }

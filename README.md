@@ -18,7 +18,7 @@ The rules are deterministic, so when a board repeats, the automaton loops foreve
 - 4 or 8 neighbours, adjustable thresholds, wrapping or walled edges
 - Up to 255 colors, with an editor to pick and reorder them
 - Starting patterns: random, blocks, spiral seeds, stripes, sprinkle
-- Live panels: board, average color, activity heat map, color histogram, activity histogram
+- Live panels: board, average color (windowed or fading), activity heat map, color and activity histograms
 - Presets to get interesting results quickly
 - Fast and responsive, on desktop and mobile
 

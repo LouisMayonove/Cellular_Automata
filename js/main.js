@@ -30,7 +30,7 @@ const send = (msg, transfer = []) => worker.postMessage(msg, transfer);
 
 const offscreen = "transferControlToOffscreen" in HTMLCanvasElement.prototype;
 const imageCanvases = {};
-for (const name of ["board", "average", "activity"]) {
+for (const name of ["board", "average", "fading", "activity"]) {
   imageCanvases[name] = panelEls[name].querySelector("canvas");
 }
 

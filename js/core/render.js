@@ -46,6 +46,13 @@ export function renderMean(sumR, sumG, sumB, n, out) {
   }
 }
 
+/** Pixels from float RGB channels (0..255), rounded. */
+export function renderColor(r, g, b, out) {
+  for (let i = 0; i < out.length; i++) {
+    out[i] = 0xff000000 | (((b[i] + 0.5) | 0) << 16) | (((g[i] + 0.5) | 0) << 8) | ((r[i] + 0.5) | 0);
+  }
+}
+
 /** Heat-map position (0..255) of each count 0..max on an S-curve (logistic)
  *  centred on `center` with scale `width`, rescaled so 0 is black and max
  *  is brightest. Contrast is highest around the centre, where most cells

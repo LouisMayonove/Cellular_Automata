@@ -56,6 +56,12 @@ export function createSettings(form, { getConfig, apply, setView, colorEditor })
       <span class="hint">past steps used by the average and activity panels</span>
     </div>
 
+    <label for="set-half-life">Fading average half-life (steps)</label>
+    <div class="inline">
+      <input type="number" id="set-half-life" min="1" max="10000">
+      <span class="hint">1 = half the previous average + half the current color each step</span>
+    </div>
+
     <span class="label">Cycles</span>
     <label class="check"><input type="checkbox" id="set-stop-cycle"> Pause once a cycle is found and recorded</label>
 
@@ -105,6 +111,7 @@ export function createSettings(form, { getConfig, apply, setView, colorEditor })
     el("wrap").checked = c.wrap;
     colorEditor.setColors(c.colors);
     el("window").value = c.window;
+    el("half-life").value = c.halfLife;
     el("stop-cycle").checked = c.stopOnCycle;
     el("error").hidden = true;
     surroundHint();
@@ -134,6 +141,7 @@ export function createSettings(form, { getConfig, apply, setView, colorEditor })
       surround: number(el("surround")),
       wrap: el("wrap").checked,
       window: number(el("window")),
+      halfLife: number(el("half-life")),
       stopOnCycle: el("stop-cycle").checked,
     };
     const bytes = config.rows * config.cols * config.window;

@@ -47,6 +47,7 @@
           <legend>Panels</legend>
           <label class="check"><input type="checkbox" data-panel="board" checked> Board</label>
           <label class="check"><input type="checkbox" data-panel="average" checked> Average color</label>
+          <label class="check"><input type="checkbox" data-panel="fading"> Fading average</label>
           <label class="check"><input type="checkbox" data-panel="activity" checked> Activity</label>
           <label class="check"><input type="checkbox" data-panel="histogram"> Color histogram</label>
           <label class="check"><input type="checkbox" data-panel="activityHist"> Activity histogram</label>
@@ -60,6 +61,10 @@
         </figure>
         <figure class="panel" data-panel="average">
           <figcaption>Average color <span class="sub"></span></figcaption>
+          <div class="panel-body"><canvas></canvas></div>
+        </figure>
+        <figure class="panel" data-panel="fading">
+          <figcaption>Fading average <span class="sub"></span></figcaption>
           <div class="panel-body"><canvas></canvas></div>
         </figure>
         <figure class="panel" data-panel="activity">

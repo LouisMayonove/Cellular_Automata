@@ -3,7 +3,9 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { WindowStats, CycleRecorder, colorCounts, histogram, quantile, stdDev } from "../js/core/stats.js";
+import {
+  WindowStats, CycleRecorder, FadingAverage, alphaForHalfLife, colorCounts, histogram, quantile, stdDev,
+} from "../js/core/stats.js";
 import { activityLevels } from "../js/core/render.js";
 import { Rng } from "../js/core/rng.js";
 
@@ -102,4 +104,16 @@ test("activity levels: 0 is black, max brightest, every count its own shade", ()
   assert.ok(typical[13] - typical[12] > 25);
   // Neither end is clipped: quiet cells (1 vs 2 changes) still differ.
   assert.ok(typical[2] > typical[1]);
+});
+
+test("fading average: weights 1/2, 1/4, 1/8... for a half-life of 1 step", () => {
+  assert.equal(alphaForHalfLife(1), 0.5);
+  assert.ok(Math.abs((1 - alphaForHalfLife(10)) ** 10 - 0.5) < 1e-12);
+  // One cell: start on color 0, then colors 1, 2, 3 (red channels 0, 0, 255, 10).
+  const pal = [[100, 0, 0], [0, 0, 0], [255, 0, 0], [10, 0, 0]];
+  const avg = new FadingAverage(Uint8Array.from([0]), pal, 0.5);
+  for (const c of [1, 2, 3]) avg.push(Uint8Array.from([c]));
+  // newest 1/2, then 1/4, 1/8, and the starting color keeps the rest (1/8)
+  const expected = 10 / 2 + 255 / 4 + 0 / 8 + 100 / 8;
+  assert.ok(Math.abs(avg.r[0] - expected) < 1e-3, `${avg.r[0]} vs ${expected}`);
 });

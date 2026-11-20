@@ -8,13 +8,17 @@
 
 import { CyclicAutomaton } from "./core/automaton.js";
 import { makeBoard } from "./core/patterns.js";
-import { WindowStats, CycleRecorder, colorCounts, histogram, quantile, stdDev } from "./core/stats.js";
-import { palette32, heatLut32, renderPalette, renderMean, activityLevels, renderActivity } from "./core/render.js";
+import {
+  WindowStats, CycleRecorder, FadingAverage, alphaForHalfLife, colorCounts, histogram, quantile, stdDev,
+} from "./core/stats.js";
+import {
+  palette32, heatLut32, renderPalette, renderMean, renderColor, activityLevels, renderActivity,
+} from "./core/render.js";
 import { SPEEDS, WINDOW_PANELS } from "./config.js";
 
 const SLICE = 12;           // ms of simulation per tick when running flat out
 const MIN_FRAME = 1000 / 60; // never redraw more often than this
-const IMAGE_PANELS = ["board", "average", "activity"];
+const IMAGE_PANELS = ["board", "average", "fading", "activity"];
 
 // --- Simulation model ---------------------------------------------------------
 
@@ -24,6 +28,8 @@ class Simulation {
     this.palette = palette;
     this.pattern = pattern; // {name, param, seed}
     this.statsWanted = true;
+    this.fadingWanted = false;
+    this.fading = null; // FadingAverage while its panel is shown
     this._buildAutomaton();
     this.initialise(pattern);
   }
@@ -49,6 +55,8 @@ class Simulation {
     this.ca.setGrid(this.initial);
     this.stats = null;
     this._ensureStats();
+    this.fading = null;
+    this._ensureFading();
     this.recorder = null;     // collects one cycle once detected
     this.cycleResult = null;  // completed CycleRecorder, shown in the panels
     this.cycleHandled = false;
@@ -60,6 +68,20 @@ class Simulation {
     } else if (!this.statsWanted) {
       this.stats = null;
     }
+  }
+
+  _ensureFading() {
+    if (this.fadingWanted && this.fading === null) {
+      this.fading = new FadingAverage(this.ca.grid, this.palette, alphaForHalfLife(this.config.halfLife));
+    } else if (!this.fadingWanted) {
+      this.fading = null;
+    }
+  }
+
+  /** Track the fading average only while its panel is shown. */
+  setFadingWanted(wanted) {
+    this.fadingWanted = wanted;
+    this._ensureFading();
   }
 
   /** Track window statistics only while a panel shows them. */
@@ -92,6 +114,12 @@ class Simulation {
       this._ensureStats();
       this.recorder = null; this.cycleResult = null;
     }
+    if (colorsChanged) {
+      this.fading = null; // restart from the current board in the new colors
+      this._ensureFading();
+    } else if (this.fading && config.halfLife !== old.halfLife) {
+      this.fading.alpha = alphaForHalfLife(config.halfLife); // keeps what it has
+    }
     return false;
   }
 
@@ -101,6 +129,7 @@ class Simulation {
     const ca = this.ca;
     ca.step();
     if (this.stats !== null) this.stats.push(ca.grid);
+    if (this.fading !== null) this.fading.push(ca.grid);
     if (this.cycleResult !== null) this.cycleResult = null; // running again after a cycle stop
     if (ca.cycle === null || this.cycleHandled || !this.config.stopOnCycle) return false;
     if (this.recorder === null) this.recorder = new CycleRecorder(ca.grid, this.palette, ca.cycle.period);
@@ -237,6 +266,14 @@ function render() {
       subs.average = `last ${s.size}/${s.window} steps`;
     }
   }
+  if (visible.has("fading")) {
+    const f = sim.fading;
+    renderColor(f.r, f.g, f.b, imageFor("fading").u32);
+    const h = sim.config.halfLife;
+    subs.fading = h === 1
+      ? "each step: half the previous average + half the current color (weights 1/2, 1/4, 1/8...)"
+      : `weights halve every ${h} steps (each step keeps ${(100 * (1 - f.alpha)).toFixed(1)}% of the average)`;
+  }
   let activity = null; // histogram + S-curve, for the activity histogram panel
   if (visible.has("activity") || visible.has("activityHist")) {
     const changes = result !== null ? result.changes : sim.stats.changes;
@@ -304,6 +341,7 @@ function render() {
 function setPanels(list) {
   panels = list;
   sim.setStatsWanted(list.some((p) => WINDOW_PANELS.includes(p)));
+  sim.setFadingWanted(list.includes("fading"));
 }
 
 const handlers = {

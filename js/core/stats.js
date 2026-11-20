@@ -115,6 +115,45 @@ export class CycleRecorder {
   }
 }
 
+/**
+ * Fading (exponential) average color: each step,
+ *   average = (1 - alpha) * average + alpha * current color,
+ * so the board k steps ago weighs alpha * (1 - alpha)^k (with alpha = 1/2:
+ * 1/2, 1/4, 1/8, ... summing to 1). Old colors fade out on their own: no
+ * window or ring buffer, three multiply-adds per cell per step.
+ */
+export class FadingAverage {
+  constructor(grid, palette, alpha) {
+    const n = grid.length;
+    [this.palR, this.palG, this.palB] = channels(palette);
+    this.alpha = alpha;
+    this.r = new Float32Array(n);
+    this.g = new Float32Array(n);
+    this.b = new Float32Array(n);
+    // Start from the current board's colors.
+    for (let i = 0; i < n; i++) {
+      const a = grid[i];
+      this.r[i] = this.palR[a]; this.g[i] = this.palG[a]; this.b[i] = this.palB[a];
+    }
+  }
+
+  push(grid) {
+    const { r, g, b, palR, palG, palB, alpha } = this;
+    const keep = 1 - alpha;
+    for (let i = 0; i < grid.length; i++) {
+      const a = grid[i];
+      r[i] = keep * r[i] + alpha * palR[a];
+      g[i] = keep * g[i] + alpha * palG[a];
+      b[i] = keep * b[i] + alpha * palB[a];
+    }
+  }
+}
+
+/** alpha giving a fading average whose weights halve every `halfLife` steps. */
+export function alphaForHalfLife(halfLife) {
+  return 1 - Math.pow(2, -1 / halfLife);
+}
+
 /** changes += (a != b), in place. */
 function countChanges(changes, a, b) {
   for (let i = 0; i < a.length; i++) changes[i] += (-(a[i] ^ b[i])) >>> 31;
