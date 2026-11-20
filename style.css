@@ -232,6 +232,17 @@ legend { font-weight: 600; padding: 0 4px; }
 .settings .inline input[type="number"] { width: 110px; flex: none; }
 .settings .hint { color: var(--muted); font-size: 12.5px; }
 .settings .error { grid-column: 1 / -1; color: #d33; }
+.settings .section {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 10px; padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.settings .section.top { margin-top: 0; }
+.settings .section h3 { margin: 0; font-size: 15px; }
+.settings .section select { width: 260px; max-width: 60%; }
+.settings .actions { align-items: center; }
+.settings .pending { color: var(--accent); font-size: 13px; margin-right: auto; }
 
 /* --- Color editor ------------------------------------------------------- */
 

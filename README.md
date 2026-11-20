@@ -19,7 +19,7 @@ The rules are deterministic, so when a board repeats, the automaton loops foreve
 - Up to 255 colors, with an editor to pick and reorder them
 - Starting patterns: random, blocks, spiral seeds, stripes, sprinkle
 - Live panels: board, average color (windowed or fading), activity heat map, color and activity histograms
-- Presets to get interesting results quickly
+- Presets for the whole setup or for each section (board size, rules, colors, memory)
 - Fast and responsive, on desktop and mobile
 
 **Keyboard:** `Space` run/pause · `→` step · `R` reset

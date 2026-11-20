@@ -93,39 +93,70 @@ export function cssToHex(color) {
 }
 
 // --- Presets -------------------------------------------------------------------
-// Each sets only the fields it lists; the others (often the grid size,
-// statistics window and cycle handling) keep their current values. Besides
-// settings fields, a preset may set `panels` (shown panels) and `speed`
-// (steps/s, a value of SPEEDS) on the simulation tab.
+// Presets only fill the settings form (Apply makes them take effect); they
+// never touch the simulation tab. Group presets fill one section of the form;
+// full presets (PRESETS) fill every field. Colors have their own sets
+// (COLOR_SETS, in the color editor).
+
+export const SIZE_PRESETS = {
+  "Tiny (50 × 50)": { rows: 50, cols: 50 },
+  "Small (100 × 100)": { rows: 100, cols: 100 },
+  "Medium (150 × 150)": { rows: 150, cols: 150 },
+  "Large (300 × 300)": { rows: 300, cols: 300 },
+  "Huge (600 × 600)": { rows: 600, cols: 600 },
+  "Wide (150 × 300)": { rows: 150, cols: 300 },
+};
+
+export const RULE_PRESETS = {
+  "Default: Moore, beat 3, surround 7": { connectivity: 8, threshold: 3, surround: 7 },
+  "Spirals: Moore, beat 3, no surround": { connectivity: 8, threshold: 3, surround: 0 },
+  "Fast fronts: Moore, beat 1": { connectivity: 8, threshold: 1, surround: 0 },
+  "Wheel spirals: Moore, beat 2": { connectivity: 8, threshold: 2, surround: 0 },
+  "Rainbow: Moore, beat 2, surround 4": { connectivity: 8, threshold: 2, surround: 4 },
+  "Smooth blobs: Moore, beat 3, surround 5": { connectivity: 8, threshold: 3, surround: 5 },
+  "Classic CCA: von Neumann, beat 1": { connectivity: 4, threshold: 1, surround: 0 },
+  "Diamonds: von Neumann, beat 2, surround 3": { connectivity: 4, threshold: 2, surround: 3 },
+};
+
+export const MEMORY_PRESETS = {
+  "Short: window 20, half-life 1": { window: 20, halfLife: 1 },
+  "Default: window 100, half-life 1": { window: 100, halfLife: 1 },
+  "Smooth: window 200, half-life 10": { window: 200, halfLife: 10 },
+  "Long: window 500, half-life 30": { window: 500, halfLife: 30 },
+};
+
+/** A full preset from one preset of each group, plus edges and colors. */
+function full(size, rules, wrap, colors, memory) {
+  const pick = (group, prefix) => {
+    const key = Object.keys(group).find((k) => k.startsWith(prefix));
+    if (!key) throw new Error(`no preset "${prefix}"`);
+    return group[key];
+  };
+  return {
+    ...pick(SIZE_PRESETS, size), ...pick(RULE_PRESETS, rules), wrap, colors,
+    ...pick(MEMORY_PRESETS, memory), stopOnCycle: true,
+  };
+}
 
 export const PRESETS = {
-  "Rainbow (6 colors, threshold 2, surround 4, no wrap)": () => ({
-    colors: ["yellow", "green", "blue", "purple", "red", "orange"], connectivity: 8,
-    threshold: 2, surround: 4, wrap: false, window: 200, panels: [...PANELS], speed: 40,
-  }),
-  "Default (3 colors, Moore, threshold 3)": () => ({
-    colors: [...DEFAULT_COLORS], connectivity: 8, threshold: 3, surround: 7, wrap: true,
-  }),
-  "Spirals 3-3-3 (no surround rule)": () => ({
-    colors: [...DEFAULT_COLORS], connectivity: 8, threshold: 3, surround: 0, wrap: true,
-  }),
-  "Fast fronts (3 colors, threshold 1)": () => ({
-    colors: [...DEFAULT_COLORS], connectivity: 8, threshold: 1, surround: 0, wrap: true,
-  }),
-  "Classic CCA (14 colors, von Neumann, threshold 1)": () => ({
-    colors: hueColors(14), connectivity: 4, threshold: 1, surround: 0, wrap: true,
-  }),
-  "Color-wheel spirals (8 colors, Moore, threshold 2)": () => ({
-    colors: hueColors(8), connectivity: 8, threshold: 2, surround: 0, wrap: true,
-  }),
-  "Smooth blobs (4 colors, strong surround rule)": () => ({
-    colors: ["red", "blue", "yellow", "green"], connectivity: 8, threshold: 3, surround: 5, wrap: true,
-  }),
-  "Walled box (3 colors, edges don't wrap)": () => ({
-    colors: [...DEFAULT_COLORS], connectivity: 8, threshold: 3, surround: 7, wrap: false,
-  }),
-  "Big board (400 x 400, short window)": () => ({ rows: 400, cols: 400, window: 50 }),
-  "Small board (60 x 60)": () => ({ rows: 60, cols: 60 }),
+  "Default (3 colors, medium board)":
+    full("Medium", "Default", true, DEFAULT_COLORS, "Default"),
+  "Rainbow (6 colors, edges don't wrap)":
+    full("Medium", "Rainbow", false, ["yellow", "green", "blue", "purple", "red", "orange"], "Smooth"),
+  "Spirals 3-3-3 (no surround rule)":
+    full("Medium", "Spirals", true, DEFAULT_COLORS, "Default"),
+  "Fast fronts (3 colors, threshold 1)":
+    full("Large", "Fast fronts", true, DEFAULT_COLORS, "Short"),
+  "Classic CCA (14 colors, von Neumann)":
+    full("Large", "Classic CCA", true, hueColors(14), "Default"),
+  "Color-wheel spirals (8 colors)":
+    full("Large", "Wheel spirals", true, hueColors(8), "Smooth"),
+  "Smooth blobs (4 colors, strong surround rule)":
+    full("Medium", "Smooth blobs", true, ["red", "blue", "yellow", "green"], "Smooth"),
+  "Walled box (small board, edges don't wrap)":
+    full("Small", "Default", false, DEFAULT_COLORS, "Default"),
+  "Big spirals (600 × 600)":
+    full("Huge", "Spirals", true, DEFAULT_COLORS, "Short"),
 };
 
 // --- Color editor ----------------------------------------------------------------

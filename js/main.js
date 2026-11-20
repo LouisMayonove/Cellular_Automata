@@ -283,26 +283,11 @@ function applyConfig(config) {
   redrawHistogram();
 }
 
-/** A preset's view changes: shown panels and/or speed (undefined: keep). */
-function setView(panels, speed) {
-  if (speed !== undefined) {
-    $("speed").value = SPEEDS.indexOf(speed);
-    speedChanged();
-    send({ type: "speed", index: Number($("speed").value) });
-  }
-  if (panels !== undefined) {
-    for (const [name, cb] of Object.entries(panelChecks)) cb.checked = panels.includes(name);
-    layoutPanels();
-    send({ type: "panels", panels: state.panels });
-  }
-}
-
 const colorEditor = createColorEditor();
 
 const settings = createSettings($("settings-form"), {
   getConfig: () => state.config,
   apply: applyConfig,
-  setView,
   colorEditor,
 });
 

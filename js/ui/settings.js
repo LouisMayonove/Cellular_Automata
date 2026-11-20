@@ -1,24 +1,39 @@
-// Settings tab: presets, grid size, neighbourhood, thresholds, edges,
-// colors, statistics window and cycle handling, with Apply / Revert.
+// Settings tab: grid size, neighbourhood, thresholds, edges, colors,
+// statistics memory and cycle handling, with Apply / Revert. Presets (full,
+// or one per section) only fill the form; Apply makes them take effect.
 // Port of SettingsPanel from ca_app.py.
 
-import { PRESETS, MAX_WINDOW_BYTES, describeHalfLife } from "../config.js";
+import {
+  PRESETS, SIZE_PRESETS, RULE_PRESETS, MEMORY_PRESETS, MAX_WINDOW_BYTES, describeHalfLife,
+} from "../config.js";
+
+/** A section heading, with its preset menu if it has one. */
+const section = (title, group, prompt) => `
+    <div class="section">
+      <h3>${title}</h3>
+      ${group ? `<select class="preset" data-group="${group}" aria-label="${title} preset"
+        title="Fill this section from a preset (Apply to use it)">
+        <option value="">${prompt}</option>
+      </select>` : ""}
+    </div>`;
 
 /**
  * @param {HTMLFormElement} form
  * @param {object} opts
  *   getConfig()          the settings currently applied
  *   apply(config)        apply new settings
- *   setView(panels, speed)  preset view changes (either may be undefined)
  *   colorEditor          {element, getColors(), setColors(colors)}
  */
-export function createSettings(form, { getConfig, apply, setView, colorEditor }) {
+export function createSettings(form, { getConfig, apply, colorEditor }) {
   form.innerHTML = `
-    <label for="set-preset">Preset</label>
-    <select id="set-preset" title="Fill the form with a preset and apply it. Settings a preset doesn't mention keep their current values.">
-      <option value="">Choose a preset…</option>
-    </select>
-
+    <div class="section top">
+      <h3>All settings</h3>
+      <select class="preset" data-group="all" aria-label="Preset for all settings"
+        title="Fill every setting below from a preset (Apply to use it)">
+        <option value="">Full preset…</option>
+      </select>
+    </div>
+    ${section("Board", "size", "Size…")}
     <span class="label">Grid (rows × columns)</span>
     <div class="inline">
       <input type="number" id="set-rows" min="2" max="5000" aria-label="Rows">
@@ -26,6 +41,7 @@ export function createSettings(form, { getConfig, apply, setView, colorEditor })
       <input type="number" id="set-cols" min="2" max="5000" aria-label="Columns">
     </div>
 
+    ${section("Rules", "rules", "Rules…")}
     <label for="set-connectivity">Neighbourhood</label>
     <select id="set-connectivity">
       <option value="4">4 (von Neumann)</option>
@@ -47,9 +63,11 @@ export function createSettings(form, { getConfig, apply, setView, colorEditor })
     <span class="label">Edges</span>
     <label class="check"><input type="checkbox" id="set-wrap"> Edges wrap around (torus)</label>
 
+    ${section("Colors", null)}
     <span class="label">Colors (each beaten by the next)</span>
     <div id="set-colors"></div>
 
+    ${section("Memory", "memory", "Memory…")}
     <label for="set-window">Statistics window (steps)</label>
     <div class="inline">
       <input type="number" id="set-window" min="1" max="100000">
@@ -62,21 +80,27 @@ export function createSettings(form, { getConfig, apply, setView, colorEditor })
       <span class="hint" id="set-half-life-hint"></span>
     </div>
 
-    <span class="label">Cycles</span>
+    ${section("Cycles", null)}
+    <span class="label">When a cycle is found</span>
     <label class="check"><input type="checkbox" id="set-stop-cycle"> Pause once a cycle is found and recorded</label>
 
-    <p class="note">Rule, color and window changes apply to the running board. A new grid
+    <p class="note">Presets only fill the form: press Apply to use them. Rule, color and memory changes apply to the running board. A new grid
       size or number of colors starts again from the chosen starting pattern.</p>
     <p class="error" id="set-error" hidden></p>
     <div class="actions">
+      <span class="pending" id="set-pending" hidden>Changes not applied yet</span>
       <button type="button" id="set-revert">Revert</button>
       <button type="submit" class="primary">Apply</button>
     </div>`;
 
   const el = (id) => form.querySelector(`#set-${id}`);
-  const preset = el("preset");
-  for (const name of Object.keys(PRESETS)) preset.add(new Option(name, name));
   el("colors").append(colorEditor.element);
+
+  const GROUPS = { all: PRESETS, size: SIZE_PRESETS, rules: RULE_PRESETS, memory: MEMORY_PRESETS };
+  const menus = [...form.querySelectorAll("select.preset")];
+  for (const menu of menus) {
+    for (const name of Object.keys(GROUPS[menu.dataset.group])) menu.add(new Option(name, name));
+  }
 
   function halfLifeHint() {
     const h = Math.max(1, Math.round(Number(el("half-life").value)) || 1);
@@ -121,6 +145,25 @@ export function createSettings(form, { getConfig, apply, setView, colorEditor })
     el("stop-cycle").checked = c.stopOnCycle;
     el("error").hidden = true;
     surroundHint();
+    updatePending();
+  }
+
+  /** The form's values as typed (no clamping), to compare with what is applied. */
+  function formValues() {
+    const int = (id) => Math.round(Number(el(id).value));
+    return {
+      rows: int("rows"), cols: int("cols"), colors: colorEditor.getColors(),
+      connectivity: Number(el("connectivity").value), threshold: int("threshold"),
+      surround: int("surround"), wrap: el("wrap").checked, window: int("window"),
+      halfLife: int("half-life"), stopOnCycle: el("stop-cycle").checked,
+    };
+  }
+
+  /** Show whether the form differs from the settings applied. */
+  function updatePending() {
+    const c = getConfig(), v = formValues();
+    el("pending").hidden = Object.keys(v).every((k) =>
+      k === "colors" ? v.colors.join() === c.colors.join() : v[k] === c[k]);
   }
 
   function number(input) {
@@ -161,12 +204,11 @@ export function createSettings(form, { getConfig, apply, setView, colorEditor })
     load(); // keep the form in sync with what is applied
   }
 
-  /** Fill the form with the chosen preset and apply it. */
-  function presetChosen() {
-    const make = PRESETS[preset.value];
-    preset.value = "";
-    if (!make) return;
-    const v = make();
+  /** Fill the fields a preset lists (the others keep their values). */
+  function presetChosen(menu) {
+    const v = GROUPS[menu.dataset.group][menu.value];
+    menu.value = "";
+    if (!v) return;
     if ("rows" in v) { el("rows").value = v.rows; el("cols").value = v.cols; }
     if ("connectivity" in v) {
       const previous = Number(el("connectivity").value);
@@ -178,8 +220,9 @@ export function createSettings(form, { getConfig, apply, setView, colorEditor })
     if ("wrap" in v) el("wrap").checked = v.wrap;
     if ("colors" in v) colorEditor.setColors(v.colors);
     if ("window" in v) el("window").value = v.window;
-    setView(v.panels, v.speed);
-    submit();
+    if ("halfLife" in v) { el("half-life").value = v.halfLife; halfLifeHint(); }
+    if ("stopOnCycle" in v) el("stop-cycle").checked = v.stopOnCycle;
+    updatePending();
   }
 
   let lastConnectivity = Number(getConfig().connectivity);
@@ -190,7 +233,11 @@ export function createSettings(form, { getConfig, apply, setView, colorEditor })
   });
   el("surround").addEventListener("input", surroundHint);
   el("half-life").addEventListener("input", halfLifeHint);
-  preset.addEventListener("change", presetChosen);
+  for (const menu of menus) menu.addEventListener("change", () => presetChosen(menu));
+  // Any edit, including the color editor's buttons, drags and color picker.
+  for (const type of ["input", "change", "click", "drop", "keyup"]) {
+    form.addEventListener(type, () => setTimeout(updatePending));
+  }
   el("revert").addEventListener("click", load);
   form.addEventListener("submit", (e) => { e.preventDefault(); submit(); });
 
