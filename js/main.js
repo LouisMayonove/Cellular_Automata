@@ -4,6 +4,8 @@
 
 import { SPEEDS, PANELS, defaultConfig, cssToRgb } from "./config.js";
 import { drawHistogram } from "./ui/histogram.js";
+import { PATTERNS } from "./core/patterns.js";
+import { randomSeed } from "./core/rng.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -143,6 +145,45 @@ $("speed").addEventListener("input", () => {
   send({ type: "speed", index: Number($("speed").value) });
 });
 
+// --- Starting board ---------------------------------------------------------------
+
+const patternSelect = $("pattern");
+for (const name of Object.keys(PATTERNS)) patternSelect.add(new Option(name, name));
+
+function patternChanged() {
+  const p = PATTERNS[patternSelect.value];
+  const hasParam = p.label !== null;
+  $("param-label").hidden = !hasParam;
+  $("param").hidden = !hasParam;
+  if (hasParam) {
+    $("param-label").textContent = p.label;
+    Object.assign($("param"), { min: p.min, max: p.max, value: p.def });
+  }
+}
+
+/** Clamp a number input to its range (and to an integer). */
+function inputValue(input) {
+  const v = Math.round(Number(input.value) || 0);
+  const clamped = Math.min(Number(input.max), Math.max(Number(input.min), v));
+  input.value = clamped;
+  return clamped;
+}
+
+function createBoard() {
+  if ($("new-seed").checked) $("seed").value = randomSeed();
+  const name = patternSelect.value;
+  state.pattern = {
+    name,
+    param: PATTERNS[name].label !== null ? inputValue($("param")) : 0,
+    seed: inputValue($("seed")),
+  };
+  send({ type: "create", pattern: state.pattern });
+  setRunningUi(false);
+}
+
+patternSelect.addEventListener("change", patternChanged);
+$("btn-create").addEventListener("click", createBoard);
+
 // --- Panels -----------------------------------------------------------------------
 
 const panelChecks = Object.fromEntries(
@@ -193,6 +234,7 @@ new ResizeObserver(redrawHistogram).observe(panelEls.histogram);
 
 // --- Start ------------------------------------------------------------------------
 
+patternChanged();
 layoutPanels();
 speedChanged();
 startWorker();
